@@ -36,20 +36,6 @@ const Sidebar = () => {
             <FaFlag className="text-[#06C167] text-xl" />
             Countries
           </button>
-          <button
-            onClick={() => navigate("/locations")}
-            className="flex items-center gap-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white font-semibold py-3 px-5 rounded-md transition"
-          >
-            <FaCity className="text-[#06C167] text-xl" />
-            Locations
-          </button>
-          <button
-            onClick={() => navigate("/search")}
-            className="flex items-center gap-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white font-semibold py-3 px-5 rounded-md transition"
-          >
-            <FaSearchLocation className="text-[#06C167] text-xl" />
-            Search
-          </button>
         </div>
       </div>
 

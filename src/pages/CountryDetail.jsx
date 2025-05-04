@@ -110,23 +110,7 @@ const CountryDetail = () => {
         </div>
       </div>
 
-      {/* Download Button */}
-      <button
-        onClick={() => {
-          const blob = new Blob([JSON.stringify(country, null, 2)], {
-            type: "application/json",
-          });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `${country.name.common}-details.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }}
-        className="mt-10 flex items-center gap-2 px-6 py-2 bg-[#06C167] text-black font-bold rounded hover:bg-[#04894e] transition duration-200"
-      >
-        <FaDownload /> Download JSON
-      </button>
+      
     </div>
   );
 };
