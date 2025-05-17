@@ -22,7 +22,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-64 min-h-screen bg-[#0f0f0f] text-white flex flex-col p-6 shadow-lg justify-between">
+    <div className="w-64 min-h-screen bg-[#0f0f0f] text-white flex flex-col p-6 shadow-lg justify-between sm:block hidden">
       <div>
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-[#06C167]">Countries</h1>
