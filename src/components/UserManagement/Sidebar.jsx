@@ -5,6 +5,7 @@ import {
   FaSignInAlt,
   FaUserPlus,
   FaSignOutAlt,
+  FaHeart,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -35,6 +36,13 @@ const Sidebar = () => {
           >
             <FaFlag className="text-[#06C167] text-xl" />
             Countries
+          </button>
+          <button
+            onClick={() => navigate("/favorites")}
+            className="flex items-center gap-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white font-semibold py-3 px-5 rounded-md transition"
+          >
+            <FaHeart className="text-[#06C167] text-xl" />
+            Favorites
           </button>
         </div>
       </div>

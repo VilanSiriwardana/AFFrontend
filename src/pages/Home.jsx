@@ -41,54 +41,46 @@ const Home = () => {
     setAllLanguages(Array.from(langs).sort());
   };
 
-  const handleSearch = async (e) => {
+  const handleSearch = (e) => {
     const value = e.target.value;
     setSearch(value);
-    setLanguage(""); // reset language filter
-
-    if (value.trim() === "") {
-      fetchCountries();
-    } else {
-      try {
-        const data = await getCountryByName(value);
-        setCountries(Array.isArray(data) ? data : []);
-      } catch {
-        setCountries([]);
-      }
-    }
+    applyFilters(value, region, language);
   };
 
-  const handleRegionChange = async (e) => {
-    const selectedRegion = e.target.value;
-    setRegion(selectedRegion);
-    setLanguage(""); // reset language filter
-
-    if (selectedRegion === "") {
-      fetchCountries();
-    } else {
-      try {
-        const data = await getCountriesByRegion(selectedRegion);
-        setCountries(Array.isArray(data) ? data : []);
-      } catch {
-        setCountries([]);
-      }
-    }
+  const handleRegionChange = (e) => {
+    const value = e.target.value;
+    setRegion(value);
+    applyFilters(search, value, language);
   };
 
   const handleLanguageChange = (e) => {
-    const selectedLanguage = e.target.value;
-    setLanguage(selectedLanguage);
+    const value = e.target.value;
+    setLanguage(value);
+    applyFilters(search, region, value);
+  };
 
-    if (selectedLanguage === "") {
-      setCountries(originalCountries);
-    } else {
-      const filtered = originalCountries.filter((country) =>
+  const applyFilters = (searchTerm, regionFilter, languageFilter) => {
+    let filtered = [...originalCountries];
+
+    if (regionFilter) {
+      filtered = filtered.filter((country) => country.region === regionFilter);
+    }
+
+    if (languageFilter) {
+      filtered = filtered.filter((country) =>
         country.languages
-          ? Object.values(country.languages).includes(selectedLanguage)
+          ? Object.values(country.languages).includes(languageFilter)
           : false
       );
-      setCountries(filtered);
     }
+
+    if (searchTerm.trim()) {
+      filtered = filtered.filter((country) =>
+        country.name.common.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setCountries(filtered);
   };
 
   return (

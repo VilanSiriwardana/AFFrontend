@@ -13,7 +13,7 @@ const NotFoundPage = () => {
           Sorry, the page you are looking for does not exist.
         </p>
         <Link
-          to="/"
+          to="/countries"
           className="text-lg font-medium text-blue-500 hover:underline"
         >
           Back to homepage

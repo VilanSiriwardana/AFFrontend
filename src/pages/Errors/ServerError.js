@@ -15,7 +15,7 @@ const ErrorPage = () => {
           Sorry but something went wrong on our end. Please try again later.
         </p>
         <Link
-          to="/"
+          to="/countries"
           className="text-lg font-medium text-blue-500 hover:underline"
         >
           Back to homepage

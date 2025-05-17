@@ -7,6 +7,7 @@ import NotFoundPage from "./pages/Errors/NotFoundPage";
 import MainLayout from "./layouts/MainLayout";
 import CountryDetail from "./pages/CountryDetail";
 import RegisterForm from "./components/UserManagement/RegisterForm";
+import Favorites from "./pages/Favorites";
 
 function App() {
   return (
@@ -32,6 +33,14 @@ function App() {
             element={
               <MainLayout>
                 <CountryDetail />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/favorites"
+            element={
+              <MainLayout>
+                <Favorites />
               </MainLayout>
             }
           />
