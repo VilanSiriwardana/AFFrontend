@@ -15,6 +15,7 @@ pipeline {
       }
 
       steps {
+        sh 'apk add --no-cache git'
         checkout scm
         sh 'npm ci'
         sh 'npm test -- --watch=false || true'
@@ -33,7 +34,10 @@ pipeline {
       steps {
         checkout scm
         sh '''
-          docker build -t af-frontend .
+          docker build \
+            --build-arg REACT_APP_API_BASE_URL=https://afbackend.onrender.com/api/v1 \
+            --build-arg REACT_APP_BASE_URL=http://localhost:3000 \
+            -t af-frontend .
           docker stop af-frontend || true
           docker rm af-frontend || true
           docker run -d -p 3000:80 --name af-frontend af-frontend
