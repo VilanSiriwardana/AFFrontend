@@ -2,8 +2,9 @@ pipeline {
     agent {
         docker {
             image 'docker:cli'
-            // Run as root to install packages, and mount Docker socket
-            args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
+            // Run as root to install packages, and mount Docker socket. 
+            // --entrypoint="" fixes the warning about container startup.
+            args '--entrypoint="" -u root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -29,6 +30,9 @@ pipeline {
 
         stage('Checkout & Install') {
             steps {
+                // Fix permission/ownership issue when passing git repo into container
+                sh 'git config --global --add safe.directory "*"'
+
                 // Manually checkout code since the Jenkins Git plugin is struggling with the container path
                 sh '''
                     # Ensure we are in a clean state or handle updates
