@@ -16,8 +16,17 @@ function App() {
         <Routes>
           {/* Auth */}
 
-          <Route path="/" element={<LoginForm />} />
+
+          <Route path="/login" element={<LoginForm />} />
           <Route path="/register" element={<RegisterForm />} />
+          <Route
+            path="/"
+            element={
+              <MainLayout>
+                <Home />
+              </MainLayout>
+            }
+          />
 
           {/* App with Sidebar */}
           <Route

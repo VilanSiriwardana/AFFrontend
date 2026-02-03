@@ -11,6 +11,8 @@ import {
   FaLanguage,
 } from "react-icons/fa";
 
+import { DUMMY_COUNTRIES } from "../constants/countriesData";
+
 const CountryDetail = () => {
   const { code } = useParams();
   const navigate = useNavigate();
@@ -19,8 +21,13 @@ const CountryDetail = () => {
   useEffect(() => {
     const fetchCountry = async () => {
       try {
-        const data = await getCountryByCode(code);
-        setCountry(data[0]);
+        // API call commented out
+        // const data = await getCountryByCode(code);
+        // setCountry(data[0]);
+        
+        // Use dummy data
+        const foundCountry = DUMMY_COUNTRIES.find(c => c.cca3 === code);
+        setCountry(foundCountry);
       } catch (error) {
         console.error("Error fetching country:", error);
       }

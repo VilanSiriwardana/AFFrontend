@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
   getAllCountries,
-  getCountriesByRegion,
-  getCountryByName,
 } from "../services/countryApi";
-import CountryCard from "../components/CountryCard";
+import CountriesGrid from "../components/CountriesGrid";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { FaSearch, FaGlobeAfrica, FaLanguage } from "react-icons/fa";
+
+import { DUMMY_COUNTRIES } from "../constants/countriesData";
 
 const Home = () => {
   const [countries, setCountries] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("");
   const [language, setLanguage] = useState("");
@@ -16,14 +18,27 @@ const Home = () => {
   const [originalCountries, setOriginalCountries] = useState([]);
 
   const fetchCountries = async () => {
-    const data = await getAllCountries();
-    if (Array.isArray(data)) {
-      setCountries(data);
-      setOriginalCountries(data);
-      extractLanguages(data);
-    } else {
+    setLoading(true);
+    try {
+      // API call commented out for now
+      // const data = await getAllCountries();
+      
+      // Using Dummy Data
+      const data = DUMMY_COUNTRIES;
+      
+      if (Array.isArray(data)) {
+        setCountries(data);
+        setOriginalCountries(data);
+        extractLanguages(data);
+      } else {
+        setCountries([]);
+        setOriginalCountries([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch countries:", error);
       setCountries([]);
-      setOriginalCountries([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -130,15 +145,7 @@ const Home = () => {
         </div>
       </div>
 
-      {countries.length === 0 ? (
-        <p className="text-center text-gray-400 text-lg">No countries found</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {countries.map((country) => (
-            <CountryCard key={country.cca3} country={country} />
-          ))}
-        </div>
-      )}
+      {loading ? <LoadingSpinner /> : <CountriesGrid countries={countries} />}
     </div>
   );
 };

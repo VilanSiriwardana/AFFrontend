@@ -58,7 +58,7 @@ const Sidebar = () => {
               Register
             </button>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/login")}
               className="flex items-center gap-3 w-full bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white font-semibold py-3 px-5 rounded-md transition justify-center"
             >
               <FaSignInAlt className="text-[#06C167] text-xl" />

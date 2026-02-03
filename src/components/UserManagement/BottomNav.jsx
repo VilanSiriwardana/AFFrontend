@@ -40,7 +40,7 @@ const BottomNav = () => {
       {!currentUser ? (
         <>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/login")}
             className="flex flex-col items-center"
           >
             <FaSignInAlt className="text-[#06C167] text-xl" />
