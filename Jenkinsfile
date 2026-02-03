@@ -10,12 +10,11 @@ pipeline {
     stage('Test & Build Application') {
       agent {
         docker {
-          image 'node:18-alpine'
+          image 'node:18'
         }
       }
 
       steps {
-        sh 'apk add --no-cache git'
         checkout scm
         sh 'npm ci'
         sh 'npm test -- --watch=false || true'
@@ -32,7 +31,7 @@ pipeline {
       }
 
       steps {
-        checkout scm
+        // Workspace is shared between stages, so code is already checked out/built
         sh '''
           docker build \
             --build-arg REACT_APP_API_BASE_URL=https://afbackend.onrender.com/api/v1 \
