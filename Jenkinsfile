@@ -1,6 +1,10 @@
 pipeline {
   agent none
 
+  options {
+    skipDefaultCheckout(true)
+  }
+
   stages {
 
     stage('Test & Build Application') {
@@ -27,6 +31,7 @@ pipeline {
       }
 
       steps {
+        checkout scm
         sh '''
           docker build -t af-frontend .
           docker stop af-frontend || true
