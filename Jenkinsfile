@@ -29,8 +29,19 @@ pipeline {
 
         stage('Checkout & Install') {
             steps {
-                // Now that git is installed, checkout the code
-                checkout scm
+                // Manually checkout code since the Jenkins Git plugin is struggling with the container path
+                sh '''
+                    # Ensure we are in a clean state or handle updates
+                    if [ -d ".git" ]; then
+                        echo "Repo exists, pulling changes..."
+                        git fetch origin
+                        git reset --hard origin/main
+                    else
+                        echo "Cloning repository..."
+                        git clone https://github.com/VilanSiriwardana/AFFrontend.git .
+                        git checkout main
+                    fi
+                '''
                 
                 // Install project dependencies
                 sh 'npm ci'
@@ -43,7 +54,6 @@ pipeline {
                 sh 'npm test -- --watch=false || true'
 
                 // Build React app (verifies build integrity)
-                // We pass env vars here just in case, though the Docker build stage serves the final artifact
                 sh "REACT_APP_API_BASE_URL=${APP_API_URL} REACT_APP_BASE_URL=${APP_BASE_URL} npm run build"
             }
         }
