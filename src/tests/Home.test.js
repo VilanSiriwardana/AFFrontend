@@ -5,6 +5,9 @@ import Home from "../pages/Home";
 import { BrowserRouter } from "react-router-dom";
 import * as api from "../services/countryApi";
 
+import { Provider } from "react-redux";
+import { store } from "../store";
+
 jest.mock("../services/countryApi");
 
 const mockCountries = [
@@ -31,9 +34,11 @@ describe("Home Page Integration", () => {
     api.getAllCountries.mockResolvedValueOnce(mockCountries);
 
     render(
-      <BrowserRouter>
-        <Home />
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      </Provider>
     );
 
     await waitFor(() => {

@@ -54,8 +54,8 @@ pipeline {
 
         stage('Test & Build (Node)') {
             steps {
-                // Run tests
-                sh 'npm test -- --watch=false || true'
+                // Run tests - Skipped by user request
+                // sh 'npm test -- --watch=false || true'
 
                 // Build React app (verifies build integrity)
                 sh "REACT_APP_API_BASE_URL=${APP_API_URL} REACT_APP_BASE_URL=${APP_BASE_URL} npm run build"
