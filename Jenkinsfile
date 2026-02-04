@@ -39,11 +39,13 @@ pipeline {
                     if [ -d ".git" ]; then
                         echo "Repo exists, pulling changes..."
                         git fetch origin
-                        git reset --hard origin/main
+                        # Reset to the specific branch being built
+                        git reset --hard origin/${BRANCH_NAME}
                     else
                         echo "Cloning repository..."
                         git clone https://github.com/VilanSiriwardana/AFFrontend.git .
-                        git checkout main
+                        # Checkout the specific branch being built
+                        git checkout ${BRANCH_NAME}
                     fi
                 '''
                 
@@ -71,7 +73,7 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Deploy') {
+        stage('Docker Build') {
             steps {
                 // Build the production image using the Dockerfile
                 // We pass the build args again for the clean production build
@@ -81,13 +83,36 @@ pipeline {
                         --build-arg REACT_APP_BASE_URL=${APP_BASE_URL} \\
                         -t af-frontend .
                 """
+            }
+        }
 
-                // Deploy
-                sh """
-                    docker stop af-frontend || true
-                    docker rm af-frontend || true
-                    docker run -d -p 3000:80 --name af-frontend af-frontend
-                """
+        stage('Deploy Development') {
+            when {
+                branch 'dev'
+            }
+            steps {
+                sh 'chmod +x deploy.sh'
+                sh './deploy.sh dev'
+            }
+        }
+
+        stage('Deploy Staging') {
+            when {
+                branch 'staging'
+            }
+            steps {
+                sh 'chmod +x deploy.sh'
+                sh './deploy.sh staging'
+            }
+        }
+
+        stage('Deploy Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh 'chmod +x deploy.sh'
+                sh './deploy.sh prod'
             }
         }
     }
