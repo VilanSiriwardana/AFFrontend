@@ -48,7 +48,15 @@ fi
 # Check if the container exists (stopped or running) and remove it
 if [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
     echo "Removing existing container: $CONTAINER_NAME"
-    docker rm $CONTAINER_NAME
+    docker rm -f $CONTAINER_NAME
+fi
+
+# Check for any OTHER container occupying the port (e.g. legacy containers)
+CONFLICT_ID=$(docker ps -q --filter "publish=$PORT")
+if [ ! -z "$CONFLICT_ID" ]; then
+    echo "Detected conflict on port $PORT. Removing blocking container: $CONFLICT_ID"
+    docker stop $CONFLICT_ID || true
+    docker rm $CONFLICT_ID || true
 fi
 
 echo "Starting new container..."
