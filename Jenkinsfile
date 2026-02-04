@@ -1,7 +1,7 @@
-pipeline {
     agent {
         docker {
             image 'docker:cli'
+            label 'linux'
             // Run as root to install packages, and mount Docker socket. 
             // --entrypoint="" fixes the warning about container startup.
             args '--entrypoint="" -u root -v /var/run/docker.sock:/var/run/docker.sock'
