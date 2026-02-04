@@ -1,18 +1,17 @@
 #!/bin/sh
+
+# Exit immediately if a command exits with a non-zero status
 set -e
 
-# Usage: ./deploy.sh <environment>
-# environment: dev, staging, prod
-
+# Get the environment argument (dev, staging, prod)
 ENV=$1
-IMAGE_NAME="af-frontend"
 
 if [ -z "$ENV" ]; then
-    echo "Error: No environment specified."
-    echo "Usage: ./deploy.sh <dev|staging|prod>"
+    echo "Error: No environment specified. Usage: ./deploy.sh <env>"
     exit 1
 fi
 
+# Define variables based on environment
 case "$ENV" in
     "dev")
         CONTAINER_NAME="react-dev"
@@ -36,14 +35,8 @@ echo "=========================================="
 echo "Deploying to Environment: $ENV"
 echo "Container Name: $CONTAINER_NAME"
 echo "Port: $PORT"
-echo "Image: $IMAGE_NAME"
+echo "Image: af-frontend"
 echo "=========================================="
-
-# Check if the container is running and stop it
-if [ "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
-    echo "Stopping running container: $CONTAINER_NAME"
-    docker stop $CONTAINER_NAME
-fi
 
 # Check if the container exists (stopped or running) and remove it
 if [ "$(docker ps -aq -f name=^/${CONTAINER_NAME}$)" ]; then
@@ -60,10 +53,6 @@ if [ ! -z "$CONFLICT_ID" ]; then
 fi
 
 echo "Starting new container..."
-docker run -d \
-    --name $CONTAINER_NAME \
-    -p $PORT:80 \
-    --restart unless-stopped \
-    $IMAGE_NAME
+docker run -d -p $PORT:80 --name $CONTAINER_NAME af-frontend
 
-echo "Successfully deployed $CONTAINER_NAME on port $PORT."
+echo "Deployment to $ENV successful!"

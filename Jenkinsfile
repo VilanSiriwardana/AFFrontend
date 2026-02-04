@@ -39,11 +39,13 @@ pipeline {
                     if [ -d ".git" ]; then
                         echo "Repo exists, pulling changes..."
                         git fetch origin
-                        git reset --hard origin/${env.BRANCH_NAME}
+                        # Reset to the specific branch being built
+                        git reset --hard origin/${BRANCH_NAME}
                     else
                         echo "Cloning repository..."
                         git clone https://github.com/VilanSiriwardana/AFFrontend.git .
-                        git checkout ${env.BRANCH_NAME}
+                        # Checkout the specific branch being built
+                        git checkout ${BRANCH_NAME}
                     fi
                 """
                 
