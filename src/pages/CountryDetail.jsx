@@ -7,7 +7,6 @@ import {
   FaFlag,
   FaCity,
   FaUsers,
-  FaDownload,
   FaLanguage,
 } from "react-icons/fa";
 

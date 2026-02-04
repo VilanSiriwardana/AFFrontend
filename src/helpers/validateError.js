@@ -1,6 +1,6 @@
 import { DEFAULT_ERROR, ERROR_CODES } from "../constants/constants";
 
-export function validateError(err, navigate) {
+export function validateError(err) {
   const errorCode = err?.code || DEFAULT_ERROR.code;
 
   if (!ERROR_CODES[errorCode]) {

@@ -3,6 +3,8 @@ import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
 import CountryCard from "../components/CountryCard";
+import { Provider } from "react-redux";
+import { store } from "../store";
 
 const mockCountry = {
   name: { common: "United States", official: "United States of America" },
@@ -16,9 +18,11 @@ const mockCountry = {
 describe("CountryCard Component", () => {
   it("renders country card with flag and info", () => {
     render(
-      <BrowserRouter>
-        <CountryCard country={mockCountry} />
-      </BrowserRouter>
+      <Provider store={store}>
+        <BrowserRouter>
+          <CountryCard country={mockCountry} />
+        </BrowserRouter>
+      </Provider>
     );
 
     expect(screen.getByAltText(/flag of United States/i)).toBeInTheDocument();

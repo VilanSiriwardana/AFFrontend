@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import {
-  getAllCountries,
-} from "../services/countryApi";
+// import {
+//   getAllCountries,
+// } from "../services/countryApi";
 import CountriesGrid from "../components/CountriesGrid";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { FaSearch, FaGlobeAfrica, FaLanguage } from "react-icons/fa";

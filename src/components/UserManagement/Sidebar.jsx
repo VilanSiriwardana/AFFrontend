@@ -1,7 +1,5 @@
 import {
   FaFlag,
-  FaCity,
-  FaSearchLocation,
   FaSignInAlt,
   FaUserPlus,
   FaSignOutAlt,
