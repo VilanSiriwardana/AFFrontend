@@ -34,7 +34,7 @@ pipeline {
                 sh 'git config --global --add safe.directory "*"'
 
                 // Manually checkout code since the Jenkins Git plugin is struggling with the container path
-                sh '''
+                sh """
                     # Ensure we are in a clean state or handle updates
                     if [ -d ".git" ]; then
                         echo "Repo exists, pulling changes..."
@@ -47,7 +47,7 @@ pipeline {
                         # Checkout the specific branch being built
                         git checkout ${BRANCH_NAME}
                     fi
-                '''
+                """
                 
                 // Install project dependencies
                 sh 'npm ci'
