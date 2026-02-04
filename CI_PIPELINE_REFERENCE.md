@@ -14,7 +14,10 @@ We restructured the CI pipeline to execute in a strict sequence where **failing 
 2.  **Lint (New)**: Runs `eslint src`. Fails fast if any syntax errors or bad patterns (e.g., unused vars) are found.
 3.  **Test (New)**: Runs `npm test -- --ci`. Fails if any unit tests break.
 4.  **Build**: Compiles the React app (`npm run build`). Skipped if previous steps fail.
-5.  **Deploy**: Dockerizes and pushes the app. Only reachable if code is perfect.
+5.  **Deploy**: Uses `deploy.sh` to deploy via Docker.
+    *   **Dev**: Port 3001
+    *   **Staging**: Port 3002
+    *   **Prod**: Port 3000
 
 ---
 
