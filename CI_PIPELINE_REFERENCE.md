@@ -58,6 +58,7 @@ Components connected to Redux cannot be tested in isolation.
 
 ### **D. Jenkinsfile Updates**
 *   **Split Stages**: Removed the single "Test & Build" stage and split it into three discrete stages: `Lint`, `Test`, `Build`.
+*   **Agent Label**: Updated to `label 'built-in || master || Jenkins'` to ensure the pipeline runs on a Linux-compatible node (the Jenkins controller) and avoids Windows nodes that lack proper Docker socket mapping.
 *   **Command**: `sh 'npm run lint'`
 *   **Command**: `sh 'npm test -- --ci'`
 
