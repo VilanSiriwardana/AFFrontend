@@ -11,6 +11,7 @@ import { DUMMY_COUNTRIES } from "../constants/countriesData";
 const Home = () => {
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const unusedVar = "broken"; // INTENTIONAL ERROR: This should fail the Lint stage
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("");
   const [language, setLanguage] = useState("");
