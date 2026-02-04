@@ -77,3 +77,35 @@ Components connected to Redux cannot be tested in isolation.
 ### **Common Error: "Could not find react-redux context"**
 *   **Cause**: Testing a component that uses `useSelector` or `useDispatch` without a Redux Store.
 *   **Fix**: Wrap the component in `render(<Provider store={store}><Component /></Provider>)`.
+
+---
+
+## 5. Branch-Based Deployment Strategy
+
+We utilize a **Multibranch Pipeline** to support three distinct environments running simultaneously.
+
+### **Environment Configuration**
+
+| Branch | Environment | Port | URL (Local) | Docker Container Name |
+| :--- | :--- | :--- | :--- | :--- |
+| `dev` | **Development** | `:3001` | `http://localhost:3001` | `af-frontend-dev` |
+| `staging` | **Staging** | `:3002` | `http://localhost:3002` | `af-frontend-staging` |
+| `main` | **Production** | `:3000` | `http://localhost:3000` | `af-frontend` |
+
+### **The Deployment Script (`deploy.sh`)**
+The `deploy.sh` script is the engine behind this isolation. It accepts two arguments: `ENVIRONMENT` and `PORT`.
+
+**Key features:**
+1.  **Conflict Resolution**: It checks if the target port is in use. If so, it forcibly removes the conflicting container.
+2.  **Idempotency**: It cleans up old containers of the same name before starting a new one.
+3.  **Naming Convention**: Containers are suffixed (e.g., `-dev`, `-staging`) to avoid collisions.
+
+### **Jenkinsfile Logic**
+The pipeline uses `when` conditionals to trigger the correct deployment:
+
+```groovy
+stage('Deploy Development') {
+    when { branch 'dev' }
+    steps { sh "./deploy.sh dev 3001" }
+}
+```
