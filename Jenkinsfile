@@ -16,8 +16,8 @@ pipeline {
     }
 
     environment {
-        APP_API_URL = 'https://afbackend.onrender.com/api/v1'
         APP_BASE_URL = 'http://localhost:3000'
+        REACT_APP_REST_COUNTRIES_URL = 'https://restcountries.com/v3.1'
     }
 
     stages {
@@ -35,20 +35,25 @@ pipeline {
                 sh 'git config --global --add safe.directory "*"'
 
                 // Manually checkout code since the Jenkins Git plugin is struggling with the container path
-                sh """
-                    # Ensure we are in a clean state or handle updates
-                    if [ -d ".git" ]; then
-                        echo "Repo exists, pulling changes..."
-                        git fetch origin
-                        # Reset to the specific branch being built
-                        git reset --hard origin/${BRANCH_NAME}
-                    else
-                        echo "Cloning repository..."
-                        git clone https://github.com/VilanSiriwardana/AFFrontend.git .
-                        # Checkout the specific branch being built
-                        git checkout ${BRANCH_NAME}
-                    fi
-                """
+                // Securely handle Git operations
+                withCredentials([usernamePassword(credentialsId: 'github-ci-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    sh """
+                        # Ensure we are in a clean state or handle updates
+                        if [ -d ".git" ]; then
+                            echo "Repo exists, pulling changes..."
+                            # Update remote to use credentials
+                            git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git
+                            git fetch origin
+                            # Reset to the specific branch being built
+                            git reset --hard origin/${BRANCH_NAME}
+                        else
+                            echo "Cloning repository..."
+                            git clone https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git .
+                            # Checkout the specific branch being built
+                            git checkout ${BRANCH_NAME}
+                        fi
+                    """
+                }
                 
                 // Install project dependencies
                 sh 'npm ci'
@@ -69,21 +74,32 @@ pipeline {
 
         stage('Build (Node)') {
             steps {
-                // Build React app (verifies build integrity)
-                sh "REACT_APP_API_BASE_URL=${APP_API_URL} REACT_APP_BASE_URL=${APP_BASE_URL} npm run build"
+                script {
+                    def apiUrlId = (env.BRANCH_NAME == 'main') ? 'af-backend-api-url-prod' : 'af-backend-api-url-dev'
+                    
+                    withCredentials([string(credentialsId: apiUrlId, variable: 'API_URL')]) {
+                         sh "REACT_APP_API_BASE_URL=${API_URL} REACT_APP_BASE_URL=${APP_BASE_URL} REACT_APP_REST_COUNTRIES_URL=${REACT_APP_REST_COUNTRIES_URL} npm run build"
+                    }
+                }
             }
         }
 
         stage('Docker Build') {
             steps {
                 // Build the production image using the Dockerfile
-                // We pass the build args again for the clean production build
-                sh """
-                    docker build \\
-                        --build-arg REACT_APP_API_BASE_URL=${APP_API_URL} \\
-                        --build-arg REACT_APP_BASE_URL=${APP_BASE_URL} \\
-                        -t af-frontend .
-                """
+                script {
+                    def apiUrlId = (env.BRANCH_NAME == 'main') ? 'af-backend-api-url-prod' : 'af-backend-api-url-dev'
+                    
+                    withCredentials([string(credentialsId: apiUrlId, variable: 'API_URL')]) {
+                        sh """
+                            docker build \\
+                                --build-arg REACT_APP_API_BASE_URL=${API_URL} \\
+                                --build-arg REACT_APP_BASE_URL=${APP_BASE_URL} \\
+                                --build-arg REACT_APP_REST_COUNTRIES_URL=${REACT_APP_REST_COUNTRIES_URL} \\
+                                -t af-frontend .
+                        """
+                    }
+                }
             }
         }
 
