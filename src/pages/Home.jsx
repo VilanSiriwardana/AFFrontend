@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-// import {
-//   getAllCountries,
-// } from "../services/countryApi";
+import {
+  getAllCountries,
+} from "../services/countryApi";
 import CountriesGrid from "../components/CountriesGrid";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { FaSearch, FaGlobeAfrica, FaLanguage } from "react-icons/fa";
 
-import { DUMMY_COUNTRIES } from "../constants/countriesData";
+
 
 const Home = () => {
   const [countries, setCountries] = useState([]);
@@ -20,11 +20,10 @@ const Home = () => {
   const fetchCountries = async () => {
     setLoading(true);
     try {
-      // API call commented out for now
-      // const data = await getAllCountries();
+      const data = await getAllCountries();
       
       // Using Dummy Data
-      const data = DUMMY_COUNTRIES;
+      // const data = DUMMY_COUNTRIES;
       
       if (Array.isArray(data)) {
         setCountries(data);

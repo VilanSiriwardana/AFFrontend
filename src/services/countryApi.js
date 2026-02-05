@@ -1,7 +1,7 @@
-const BASE_URL = "https://restcountries.com/v3.1";
+const BASE_URL = process.env.REACT_APP_REST_COUNTRIES_URL;
 
 export const getAllCountries = async () => {
-  const res = await fetch(`${BASE_URL}/all`);
+  const res = await fetch(`${BASE_URL}/all?fields=name,cca3,flags,region,capital,population,languages,subregion`);
   return res.json();
 };
 
