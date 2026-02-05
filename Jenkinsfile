@@ -74,13 +74,17 @@ pipeline {
         stage('Build (Node)') {
             steps {
                 script {
-                    def apiUrlId = (env.BRANCH_NAME == 'main') ? 'af-backend-api-url-prod' : 'af-backend-api-url-dev'
+                    // Select the correct secret file ID based on the branch
+                    def envFileId = (env.BRANCH_NAME == 'main') ? 'env-file-prod' : 'env-file-dev'
                     
-                    withCredentials([
-                        string(credentialsId: apiUrlId, variable: 'API_URL'),
-                        string(credentialsId: 'af-countries-api-url', variable: 'COUNTRIES_URL')
-                    ]) {
-                         sh "REACT_APP_API_BASE_URL=${API_URL} REACT_APP_BASE_URL=${APP_BASE_URL} REACT_APP_REST_COUNTRIES_URL=${COUNTRIES_URL} npm run build"
+                    // Inject the Secret File directly as '.env'
+                    withCredentials([file(credentialsId: envFileId, variable: 'ENV_FILE')]) {
+                        sh 'cp $ENV_FILE .env'
+                        
+                        // Optional: Append any common non-secret vars if they aren't in the secret file
+                        // sh "echo 'REACT_APP_BASE_URL=${APP_BASE_URL}' >> .env"
+                        
+                        sh "npm run build"
                     }
                 }
             }
@@ -89,22 +93,10 @@ pipeline {
         stage('Docker Build') {
             steps {
                 // Build the production image using the Dockerfile
-                script {
-                    def apiUrlId = (env.BRANCH_NAME == 'main') ? 'af-backend-api-url-prod' : 'af-backend-api-url-dev'
-                    
-                    withCredentials([
-                        string(credentialsId: apiUrlId, variable: 'API_URL'),
-                        string(credentialsId: 'af-countries-api-url', variable: 'COUNTRIES_URL')
-                    ]) {
-                        sh """
-                            docker build \\
-                                --build-arg REACT_APP_API_BASE_URL=${API_URL} \\
-                                --build-arg REACT_APP_BASE_URL=${APP_BASE_URL} \\
-                                --build-arg REACT_APP_REST_COUNTRIES_URL=${COUNTRIES_URL} \\
-                                -t af-frontend .
-                        """
-                    }
-                }
+                // Build the production image using the Dockerfile
+                // The .env file created in the previous stage is preserved in the workspace
+                // and will be copied into the Docker image by the COPY instruction.
+                sh "docker build -t af-frontend ."
             }
         }
 
