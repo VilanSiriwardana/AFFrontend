@@ -86,11 +86,34 @@ We utilize a **Multibranch Pipeline** to support three distinct environments run
 
 ### **Environment Configuration**
 
-| Branch | Environment | Port | URL (Local) | Docker Container Name |
-| :--- | :--- | :--- | :--- | :--- |
-| `dev` | **Development** | `:3001` | `http://localhost:3001` | `af-frontend-dev` |
-| `staging` | **Staging** | `:3002` | `http://localhost:3002` | `af-frontend-staging` |
-| `main` | **Production** | `:3000` | `http://localhost:3000` | `af-frontend` |
+| Branch | Environment | Port | URL (Local) | Docker Container Name | Config Source (Jenkins Credential) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `dev` | **Development** | `:3001` | `http://localhost:3001` | `af-frontend-dev` | `env-file-dev` |
+| `staging` | **Staging** | `:3002` | `http://localhost:3002` | `af-frontend-staging` | `env-file-staging` |
+| `main` | **Production** | `:3000` | `http://localhost:3000` | `af-frontend` | `env-file-prod` |
+
+
+## 6. Secure Environment Configuration (Secrets Management)
+
+We have migrated from hardcoded secrets to **Secret File Injection**.
+
+### **How it works:**
+1.  **No Secrets in Code**: The repo contains NO `.env` files.
+2.  **Jenkins Credentials**: We store the entire `.env` content as a **Secret File** in Jenkins.
+3.  **Pipeline Injection**:
+    *   The `Jenkinsfile` detects the branch (e.g., `main`).
+    *   It securely downloads the corresponding secret file (e.g., `env-file-prod`).
+    *   It temporarily saves it as `.env` in the workspace.
+4.  **Build Process**:
+    *   Docker copies this `.env` file (`COPY .env* ./`).
+    *   `npm run build` uses it to "bake" the variables into the React build.
+
+### **How to add a new Variable:**
+You do NOT need to edit `Jenkinsfile` or `Dockerfile`.
+1.  Add the variable to your local `.env.dev` / `.env.prod` file.
+2.  Go to Jenkins -> Credentials -> Update `env-file-dev` (or prod).
+3.  Upload the updated file.
+4.  Re-run the build.
 
 ### **The Deployment Script (`deploy.sh`)**
 The `deploy.sh` script is the engine behind this isolation. It accepts two arguments: `ENVIRONMENT` and `PORT`.
