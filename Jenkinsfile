@@ -75,7 +75,8 @@ pipeline {
             steps {
                 script {
                     // Select the correct secret file ID based on the branch
-                    def envFileId = (env.BRANCH_NAME == 'main') ? 'env-file-prod' : 'env-file-dev'
+                    def envFileId = (env.BRANCH_NAME == 'main') ? 'env-file-prod' : 
+                                    (env.BRANCH_NAME == 'staging') ? 'env-file-staging' : 'env-file-dev'
                     
                     // Inject the Secret File directly as '.env'
                     withCredentials([file(credentialsId: envFileId, variable: 'ENV_FILE')]) {
