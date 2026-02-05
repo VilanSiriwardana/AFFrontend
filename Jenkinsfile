@@ -17,7 +17,6 @@ pipeline {
 
     environment {
         APP_BASE_URL = 'http://localhost:3000'
-        REACT_APP_REST_COUNTRIES_URL = 'https://restcountries.com/v3.1'
     }
 
     stages {
@@ -36,7 +35,7 @@ pipeline {
 
                 // Manually checkout code since the Jenkins Git plugin is struggling with the container path
                 // Securely handle Git operations
-                withCredentials([usernamePassword(credentialsId: 'github-ci-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                     sh """
                         # Ensure we are in a clean state or handle updates
                         if [ -d ".git" ]; then
@@ -77,8 +76,11 @@ pipeline {
                 script {
                     def apiUrlId = (env.BRANCH_NAME == 'main') ? 'af-backend-api-url-prod' : 'af-backend-api-url-dev'
                     
-                    withCredentials([string(credentialsId: apiUrlId, variable: 'API_URL')]) {
-                         sh "REACT_APP_API_BASE_URL=${API_URL} REACT_APP_BASE_URL=${APP_BASE_URL} REACT_APP_REST_COUNTRIES_URL=${REACT_APP_REST_COUNTRIES_URL} npm run build"
+                    withCredentials([
+                        string(credentialsId: apiUrlId, variable: 'API_URL'),
+                        string(credentialsId: 'af-countries-api-url', variable: 'COUNTRIES_URL')
+                    ]) {
+                         sh "REACT_APP_API_BASE_URL=${API_URL} REACT_APP_BASE_URL=${APP_BASE_URL} REACT_APP_REST_COUNTRIES_URL=${COUNTRIES_URL} npm run build"
                     }
                 }
             }
@@ -90,12 +92,15 @@ pipeline {
                 script {
                     def apiUrlId = (env.BRANCH_NAME == 'main') ? 'af-backend-api-url-prod' : 'af-backend-api-url-dev'
                     
-                    withCredentials([string(credentialsId: apiUrlId, variable: 'API_URL')]) {
+                    withCredentials([
+                        string(credentialsId: apiUrlId, variable: 'API_URL'),
+                        string(credentialsId: 'af-countries-api-url', variable: 'COUNTRIES_URL')
+                    ]) {
                         sh """
                             docker build \\
                                 --build-arg REACT_APP_API_BASE_URL=${API_URL} \\
                                 --build-arg REACT_APP_BASE_URL=${APP_BASE_URL} \\
-                                --build-arg REACT_APP_REST_COUNTRIES_URL=${REACT_APP_REST_COUNTRIES_URL} \\
+                                --build-arg REACT_APP_REST_COUNTRIES_URL=${COUNTRIES_URL} \\
                                 -t af-frontend .
                         """
                     }
