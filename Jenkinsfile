@@ -24,7 +24,7 @@ pipeline {
             steps {
                 echo 'Installing Git, Node.js, and npm...'
                 // Install dependencies in the alpine-based docker image
-                sh 'apk add --no-cache git nodejs npm openssh-client'
+                sh 'apk add --no-cache git nodejs npm'
             }
         }
 
@@ -59,13 +59,7 @@ pipeline {
             }
         }
 
-        stage('Test SSH Connection') {
-            steps {
-                sshagent(credentials: ['directadmin-ssh']) {
-                    sh 'ssh -o StrictHostKeyChecking=no invoiceflow@test.invoiceflow.nl "pwd && ls domains"'
-                }
-            }
-        }
+
 
         stage('Lint') {
             steps {
