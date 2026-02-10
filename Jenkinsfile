@@ -1,13 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:cli'
-            label 'built-in || master || Jenkins'
-            // Run as root to install packages, and mount Docker socket. 
-            // --entrypoint="" fixes the warning about container startup.
-            args '--entrypoint="" -u root -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
 
     // Skip the default checkout because the host/agent might not have git configured.
     // We will install git and checkout manually inside the container.
@@ -22,9 +14,12 @@ pipeline {
     stages {
         stage('Setup Environment') {
             steps {
-                echo 'Installing Git, Node.js, and npm...'
-                // Install dependencies in the alpine-based docker image
-                sh 'apk add --no-cache git nodejs npm'
+                echo 'Checking for required tools on the server...'
+                // Since we are running on the host, we assume tools are installed via setup_server.sh
+                sh 'git --version'
+                sh 'node -v'
+                sh 'npm -v'
+                sh 'docker --version'
             }
         }
 
