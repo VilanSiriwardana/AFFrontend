@@ -89,13 +89,14 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASS')]) {
                         echo "Deploying branch [${env.BRANCH_NAME}] to [${remotePath}]..."
                         
-                        // Strict SFTP deployment using batch commands
-                        // sshpass handles password-based authentication for the sftp client
+                        // Navigate to build directory locally so 'put -r .' captures EVERYTHING (incl hidden files)
+                        // Note: 'put -r .' is more robust than 'put -r build/*'
                         sh """
+                            cd build
                             sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@109.163.225.82 <<EOF
                             cd ${remotePath}
                             rm -rf *
-                            put -r build/*
+                            put -r .
                             bye
 EOF
                         """
