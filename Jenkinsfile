@@ -3,6 +3,10 @@ pipeline {
 
     options {
         skipDefaultCheckout(true)
+        // Optimization: Prevent builds from queuing and waiting for previous runs to finish
+        disableConcurrentBuilds()
+        // Optimization: Start immediately on push without the default 5s waiting period
+        quietPeriod(0)
     }
 
     environment {
@@ -13,11 +17,13 @@ pipeline {
     stages {
         stage('Branch Validation') {
             steps {
+                // Optimization: Newer builds will skip over older ones at this point
+                milestone(1)
                 script {
                     def allowedBranches = ['main', 'staging', 'dev']
                     if (!allowedBranches.contains(env.BRANCH_NAME)) {
                         currentBuild.result = 'ABORTED'
-                        error("Pipeline execution blocked: Branch '${env.BRANCH_NAME}' is not authorized. Only main, staging, and dev are allowed.")
+                        error("Pipeline execution blocked: Branch '${env.BRANCH_NAME}' is not authorized.")
                     }
                     echo "Branch authorized: ${env.BRANCH_NAME}"
                 }
@@ -26,12 +32,9 @@ pipeline {
 
         stage('Setup Environment') {
             steps {
-                echo 'Checking for required tools on the server...'
-                sh 'git --version'
-                sh 'node -v'
-                sh 'npm -v'
-                sh 'sshpass -V'
-                sh 'ssh -V'
+                echo 'Checking for required tools...'
+                // Consolidated check for faster execution
+                sh 'git --version && node -v && npm -v && sshpass -V && ssh -V'
             }
         }
 
@@ -42,12 +45,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                     sh """
                         if [ -d ".git" ]; then
-                            echo "Repo exists, pulling changes..."
                             git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git
                             git fetch origin
                             git reset --hard origin/${BRANCH_NAME}
                         else
-                            echo "Cloning repository..."
                             git clone https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git .
                             git checkout ${BRANCH_NAME}
                         fi
