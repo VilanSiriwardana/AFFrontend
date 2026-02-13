@@ -99,6 +99,15 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] px-6 py-6 text-white">
+      {/* Deployment Verification Banner */}
+      <div className="mb-6 p-4 bg-[#06C167]/10 border border-[#06C167] rounded-lg flex items-center gap-3">
+        <span className="text-xl">🚀</span>
+        <div>
+          <h2 className="font-bold text-[#06C167]">Pipeline Success!</h2>
+          <p className="text-sm text-gray-400">This version was automatically deployed to DirectAdmin using Jenkins and SFTP.</p>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="relative w-full sm:w-1/2">
           <FaSearch className="absolute left-3 top-4 text-gray-400" />
