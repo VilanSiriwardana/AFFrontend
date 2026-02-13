@@ -16,7 +16,7 @@ We restructured the CI pipeline to execute in a strict sequence where **failing 
 4.  **Build**: Compiles the React app (`npm run build`).
 5.  **Deploy (SFTP)**: Deploys static files to DirectAdmin shared hosting.
     *   **Target**: `domains/test.invoiceflow.nl/public_html`
-    *   **Method**: `sshpass` + `scp`
+    *   **Method**: `sshpass` + `sftp` (Strict SFTP mode, no shell required)
 
 ---
 
@@ -27,7 +27,7 @@ We restructured the CI pipeline to execute in a strict sequence where **failing 
 | **Silent Failures** | Code with "warnings" was being deployed. | **Strict Linting**: Promoted specific warnings (like unused vars) to Errors. |
 | **Docker Not Allowed** | Host environment (DirectAdmin) doesn't support Docker. | **SFTP Deployment**: Direct upload of static assets to the web root. |
 | **"It works on my machine"** | Dependencies were inconsistent between Local & Jenkins. | **`npm ci`**: Forces Jenkins to respect `package-lock.json` exactly. |
-| **Manual Cleanup** | Old files remained on the server after deployment. | **Pre-Deploy Cleanup**: `rm -rf` run via SSH before upload. |
+| **No Shell Access** | Server blocks SSH shell sessions (`exec request failed`). | **Strict SFTP**: Uses `sftp` batch commands which don't require the shell subsystem. |
 
 ---
 
@@ -40,15 +40,18 @@ Modern Flat Config used to trigger "Fail-Fast" on messy code.
 Manually mock `axios` and other ESM modules to ensure test stability in the CI environment.
 
 ### **C. Jenkinsfile SFTP Deployment**
-The pipeline now uses `sshpass` to authenticate with the SFTP server using credentials stored in Jenkins.
+The pipeline now uses `sshpass` to authenticate with the SFTP server using `sftp` in batch mode (via heredoc).
 
 **Key Logic:**
 ```groovy
 withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', ...)]) {
-    // 1. Cleanup
-    sh "sshpass -p '${SFTP_PASS}' ssh -o StrictHostKeyChecking=no ... 'rm -rf .../*'"
-    // 2. Upload
-    sh "sshpass -p '${SFTP_PASS}' scp -o StrictHostKeyChecking=no -r build/* ...:..."
+    sh """
+        sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@${HOST} <<EOF
+        cd domains/test.invoiceflow.nl/public_html
+        put -r build/*
+        bye
+EOF
+    """
 }
 ```
 

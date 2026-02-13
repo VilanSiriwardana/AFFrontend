@@ -19,6 +19,7 @@ pipeline {
                 sh 'node -v'
                 sh 'npm -v'
                 sh 'sshpass -V'
+                sh 'sftp -V'
             }
         }
 
@@ -84,15 +85,17 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASS')]) {
-                        echo 'Deploying to DirectAdmin via SFTP...'
+                        echo 'Deploying to DirectAdmin via strict SFTP (No Shell Allowed)...'
                         
-                        // 1. Remove existing files inside public_html
-                        // Use ssh with sshpass to execute remote cleanup
-                        sh "sshpass -p '${SFTP_PASS}' ssh -o StrictHostKeyChecking=no ${SFTP_USER}@109.163.225.82 'rm -rf domains/test.invoiceflow.nl/public_html/*'"
-                        
-                        // 2. Upload contents of build/* to public_html
-                        // Use scp with sshpass for recursive upload
-                        sh "sshpass -p '${SFTP_PASS}' scp -o StrictHostKeyChecking=no -r build/* ${SFTP_USER}@109.163.225.82:domains/test.invoiceflow.nl/public_html/"
+                        // Use sftp with a heredoc to cd and put files recursively.
+                        // sshpass handles the password authentication.
+                        sh """
+                            sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@109.163.225.82 <<EOF
+                            cd domains/test.invoiceflow.nl/public_html
+                            put -r build/*
+                            bye
+EOF
+                        """
                         
                         echo 'Deployment Successful!'
                     }
