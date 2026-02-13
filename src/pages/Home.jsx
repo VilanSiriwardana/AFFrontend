@@ -104,7 +104,7 @@ const Home = () => {
         <span className="text-xl">🚀</span>
         <div>
           <h2 className="font-bold text-[#06C167]">Production Environment Live!</h2>
-          <p className="text-sm text-gray-400">This <strong>MAIN branch</strong> update was successfully deployed via Jenkins SFTP to the production server. <span className="bg-[#06C167] text-black text-xs px-2 py-0.5 rounded ml-2 font-bold">VERIFIED</span></p>
+          <p className="text-sm text-gray-400">This <strong>MAIN branch</strong> UPDATE was successfully deployed via Jenkins SFTP to the production server. <span className="bg-[#06C167] text-black text-xs px-2 py-0.5 rounded ml-2 font-bold">VERIFIED</span></p>
         </div>
       </div>
 
