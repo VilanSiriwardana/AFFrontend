@@ -12,6 +12,11 @@ pipeline {
         ansiColor('xterm')
     }
 
+    triggers {
+        // Check for changes every minute (if no webhook is configured)
+        pollSCM('* * * * *')
+    }
+
     environment {
         APP_BASE_URL = 'http://localhost:3000'
         SFTP_HOST = '109.163.225.82'
