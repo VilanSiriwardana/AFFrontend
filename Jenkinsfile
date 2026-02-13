@@ -7,9 +7,23 @@ pipeline {
 
     environment {
         APP_BASE_URL = 'http://localhost:3000'
+        SFTP_HOST = '109.163.225.82'
     }
 
     stages {
+        stage('Branch Validation') {
+            steps {
+                script {
+                    def allowedBranches = ['main', 'staging', 'dev']
+                    if (!allowedBranches.contains(env.BRANCH_NAME)) {
+                        currentBuild.result = 'ABORTED'
+                        error("Pipeline execution blocked: Branch '${env.BRANCH_NAME}' is not authorized. Only main, staging, and dev are allowed.")
+                    }
+                    echo "Branch authorized: ${env.BRANCH_NAME}"
+                }
+            }
+        }
+
         stage('Setup Environment') {
             steps {
                 echo 'Checking for required tools on the server...'
@@ -70,38 +84,29 @@ pipeline {
             }
         }
 
-        stage('Deploy (SFTP)') {
+        stage('Deploy Development') {
+            when { branch 'dev' }
             steps {
                 script {
-                    def remotePath = ""
+                    deployToSFTP("domains/test.invoiceflow.nl/public_html")
+                }
+            }
+        }
 
-                    // Strict Branch Validation & Path Selection
-                    if (env.BRANCH_NAME == 'main') {
-                        remotePath = "domains/prod.invoiceflow.nl/public_html"
-                    } else if (env.BRANCH_NAME == 'staging') {
-                        remotePath = "domains/staging.invoiceflow.nl/public_html"
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        remotePath = "domains/test.invoiceflow.nl/public_html"
-                    } else {
-                        error("Deployment not allowed for branch: ${env.BRANCH_NAME}")
-                    }
+        stage('Deploy Staging') {
+            when { branch 'staging' }
+            steps {
+                script {
+                    deployToSFTP("domains/staging.invoiceflow.nl/public_html")
+                }
+            }
+        }
 
-                    withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASS')]) {
-                        echo "Deploying branch [${env.BRANCH_NAME}] to [${remotePath}]..."
-                        
-                        // Navigate to build directory locally so 'put -r .' captures EVERYTHING (incl hidden files)
-                        // Note: 'put -r .' is more robust than 'put -r build/*'
-                        sh """
-                            cd build
-                            sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@109.163.225.82 <<EOF
-                            cd ${remotePath}
-                            rm -rf *
-                            put -r .
-                            bye
-EOF
-                        """
-                        echo 'Deployment Successful!'
-                    }
+        stage('Deploy Production') {
+            when { branch 'main' }
+            steps {
+                script {
+                    deployToSFTP("domains/prod.invoiceflow.nl/public_html")
                 }
             }
         }
@@ -109,10 +114,30 @@ EOF
 
     post {
         success {
-            echo 'Frontend Pipeline Deployed Successfully!'
+            echo "Successfully Deployed ${env.BRANCH_NAME} to ${env.BRANCH_NAME == 'main' ? 'Production' : env.BRANCH_NAME == 'staging' ? 'Staging' : 'Development'}"
         }
         failure {
             echo 'Frontend Pipeline Failed.'
         }
+        aborted {
+            echo 'Pipeline Aborted due to Branch Security Policy.'
+        }
+    }
+}
+
+// Global helper function for SFTP Deployment
+def deployToSFTP(String remotePath) {
+    withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASS')]) {
+        echo "Initiating SFTP transfer to: ${remotePath}"
+        sh """
+            cd build
+            sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@${SFTP_HOST} <<EOF
+            cd ${remotePath}
+            rm -rf *
+            put -r .
+            bye
+EOF
+        """
+        echo "Deployment to ${remotePath} successful."
     }
 }
