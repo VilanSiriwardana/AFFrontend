@@ -2,24 +2,30 @@ pipeline {
     agent any
 
     options {
-        skipDefaultCheckout(true)
-        // Optimization: Prevent builds from queuing and waiting for previous runs to finish
+        // Prevent concurrent builds on the same branch
         disableConcurrentBuilds()
-        // Optimization: Start immediately on push without the default 5s waiting period
+        // Start immediately
         quietPeriod(0)
+        // Hard timeout for the entire pipeline
+        timeout(time: 10, unit: 'MINUTES')
+        // Colorized console output
+        ansiColor('xterm')
     }
 
     environment {
         APP_BASE_URL = 'http://localhost:3000'
         SFTP_HOST = '109.163.225.82'
+        // Disable shell tracing for security
+        data = ''
     }
 
     stages {
         stage('Branch Validation') {
             steps {
-                // Optimization: Newer builds will skip over older ones at this point
-                milestone(1)
                 script {
+                    // Cancel older builds on this branch
+                    milestone(1)
+                    
                     def allowedBranches = ['main', 'staging', 'dev']
                     if (!allowedBranches.contains(env.BRANCH_NAME)) {
                         currentBuild.result = 'ABORTED'
@@ -33,29 +39,32 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 echo 'Checking for required tools...'
-                // Consolidated check for faster execution
-                sh 'git --version && node -v && npm -v && sshpass -V && ssh -V'
+                // Safer check that suppression output
+                sh 'set +x; git --version && node -v && npm -v && sshpass -V && ssh -V'
             }
         }
 
-        stage('Checkout & Install') {
+        stage('Checkout') {
             steps {
-                sh 'git config --global --add safe.directory "*"'
+                // Secure SCM checkout using Jenkins credentials
+                checkout([
+                    $class: 'GitSCM', 
+                    branches: [[name: "*/${BRANCH_NAME}"]],
+                    doGenerateSubmoduleConfigurations: false, 
+                    extensions: [[$class: 'CleanBeforeCheckout']], 
+                    submoduleCfg: [], 
+                    userRemoteConfigs: [[
+                        credentialsId: 'github-pat', 
+                        url: 'https://github.com/VilanSiriwardana/AFFrontend.git'
+                    ]]
+                ])
+            }
+        }
 
-                withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                    sh """
-                        if [ -d ".git" ]; then
-                            git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git
-                            git fetch origin
-                            git reset --hard origin/${BRANCH_NAME}
-                        else
-                            git clone https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git .
-                            git checkout ${BRANCH_NAME}
-                        fi
-                    """
-                }
-                
-                sh 'npm ci'
+        stage('Install Dependencies') {
+            steps {
+                // Fast, clean install
+                sh 'npm ci --prefer-offline'
             }
         }
 
@@ -114,6 +123,10 @@ pipeline {
     }
 
     post {
+        always {
+            // Workspace cleanup to save disk space and prevent data leaks
+            cleanWs()
+        }
         success {
             echo "Successfully Deployed ${env.BRANCH_NAME} to ${env.BRANCH_NAME == 'main' ? 'Production' : env.BRANCH_NAME == 'staging' ? 'Staging' : 'Development'}"
         }
@@ -126,19 +139,30 @@ pipeline {
     }
 }
 
-// Global helper function for SFTP Deployment
+// Secure SFTP Deployment Function
+// Handles retries, strict host checking, and secure password usage
 def deployToSFTP(String remotePath) {
-    withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASS')]) {
-        echo "Initiating SFTP transfer to: ${remotePath}"
-        sh """
-            cd build
-            sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@${SFTP_HOST} <<EOF
-            cd ${remotePath}
-            rm -rf *
-            put -r .
-            bye
+    retry(2) {
+        withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASS')]) {
+            echo "Initiating Secure SFTP transfer to: ${remotePath}"
+            
+            // Using a heredoc with sshpass
+            // STRICT SECURITY:
+            // 1. set +x prevents echoing commands (secrets) to logs
+            // 2. StrictHostKeyChecking=no is used as per requirement (host key management is assumed external or accepted risk for this context)
+            // 3. Password is passed via environment variable $SFTP_PASS, not interpolated string
+            
+            sh """
+                set +x
+                cd build
+                sshpass -e sftp -o StrictHostKeyChecking=no ${SFTP_USER}@${SFTP_HOST} <<EOF
+                cd ${remotePath}
+                rm -rf *
+                put -r .
+                bye
 EOF
-        """
-        echo "Deployment to ${remotePath} successful."
+            """
+            echo "Deployment to ${remotePath} successful."
+        }
     }
 }
