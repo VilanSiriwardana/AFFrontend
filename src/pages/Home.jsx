@@ -100,11 +100,11 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#0f0f0f] px-6 py-6 text-white">
       {/* Deployment Verification Banner */}
-      <div className="mb-6 p-4 bg-[#3b82f6]/10 border border-[#3b82f6] rounded-lg flex items-center gap-3">
-        <span className="text-xl">🛠️</span>
+      <div className="mb-6 p-4 bg-[#f59e0b]/10 border border-[#f59e0b] rounded-lg flex items-center gap-3">
+        <span className="text-xl">🧪</span>
         <div>
-          <h2 className="font-bold text-[#3b82f6]">Dev Environment Auto-Deployed!</h2>
-          <p className="text-sm text-gray-400">This <strong>DEV branch</strong> update was successfully pushed via the Jenkins SFTP pipeline to the test server.</p>
+          <h2 className="font-bold text-[#f59e0b]">Staging Environment Auto-Deployed!</h2>
+          <p className="text-sm text-gray-400">This <strong>STAGING branch</strong> update was successfully pushed via the Jenkins SFTP pipeline to the staging server.</p>
         </div>
       </div>
 
