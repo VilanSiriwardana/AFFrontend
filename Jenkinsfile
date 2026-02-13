@@ -155,7 +155,7 @@ def deployToSFTP(String remotePath) {
             sh """
                 set +x
                 cd build
-                sshpass -e sftp -o StrictHostKeyChecking=no ${SFTP_USER}@${SFTP_HOST} <<EOF
+                sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@${SFTP_HOST} <<EOF
                 cd ${remotePath}
                 rm -rf *
                 put -r .
