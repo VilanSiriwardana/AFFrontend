@@ -19,7 +19,8 @@ pipeline {
                 sh 'node -v'
                 sh 'npm -v'
                 sh 'sshpass -V'
-                sh 'sftp -V'
+                // sftp usually doesn't have its own version flag, but it's part of OpenSSH
+                sh 'ssh -V'
             }
         }
 
