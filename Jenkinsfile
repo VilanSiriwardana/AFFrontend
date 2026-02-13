@@ -1,16 +1,8 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:cli'
-            label 'built-in || master || Jenkins'
-            // Run as root to install packages, and mount Docker socket. 
-            // --entrypoint="" fixes the warning about container startup.
-            args '--entrypoint="" -u root -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
 
     // Skip the default checkout because the host/agent might not have git configured.
-    // We will install git and checkout manually inside the container.
+    // We will install git and checkout manually.
     options {
         skipDefaultCheckout(true)
     }
@@ -22,39 +14,35 @@ pipeline {
     stages {
         stage('Setup Environment') {
             steps {
-                echo 'Installing Git, Node.js, and npm...'
-                // Install dependencies in the alpine-based docker image
-                sh 'apk add --no-cache git nodejs npm'
+                echo 'Checking for required tools on the server...'
+                sh 'git --version'
+                sh 'node -v'
+                sh 'npm -v'
+                sh 'sshpass -V'
+                // sftp usually doesn't have its own version flag, but it's part of OpenSSH
+                sh 'ssh -V'
             }
         }
 
         stage('Checkout & Install') {
             steps {
-                // Fix permission/ownership issue when passing git repo into container
                 sh 'git config --global --add safe.directory "*"'
 
-                // Manually checkout code since the Jenkins Git plugin is struggling with the container path
-                // Securely handle Git operations
                 withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                     sh """
-                        # Ensure we are in a clean state or handle updates
                         if [ -d ".git" ]; then
                             echo "Repo exists, pulling changes..."
-                            # Update remote to use credentials
                             git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git
                             git fetch origin
-                            # Reset to the specific branch being built
                             git reset --hard origin/${BRANCH_NAME}
                         else
                             echo "Cloning repository..."
                             git clone https://${GIT_USER}:${GIT_PASS}@github.com/VilanSiriwardana/AFFrontend.git .
-                            # Checkout the specific branch being built
                             git checkout ${BRANCH_NAME}
                         fi
                     """
                 }
                 
-                // Install project dependencies
                 sh 'npm ci'
             }
         }
@@ -81,53 +69,38 @@ pipeline {
                     // Inject the Secret File directly as '.env'
                     withCredentials([file(credentialsId: envFileId, variable: 'ENV_FILE')]) {
                         sh 'cp $ENV_FILE .env'
-                        
-                        // Optional: Append any common non-secret vars if they aren't in the secret file
-                        // sh "echo 'REACT_APP_BASE_URL=${APP_BASE_URL}' >> .env"
-                        
                         sh "npm run build"
                     }
                 }
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                // Build the production image using the Dockerfile
-                // Build the production image using the Dockerfile
-                // The .env file created in the previous stage is preserved in the workspace
-                // and will be copied into the Docker image by the COPY instruction.
-                sh "docker build -t af-frontend ."
-            }
-        }
-
-        stage('Deploy Development') {
+        stage('Deploy (SFTP)') {
             when {
-                branch 'dev'
+                anyOf {
+                    branch 'main'
+                    branch 'staging'
+                    branch 'dev'
+                }
             }
             steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh dev'
-            }
-        }
-
-        stage('Deploy Staging') {
-            when {
-                branch 'staging'
-            }
-            steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh staging'
-            }
-        }
-
-        stage('Deploy Production') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh 'chmod +x deploy.sh'
-                sh './deploy.sh prod'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'invoiceflow-sftp', usernameVariable: 'SFTP_USER', passwordVariable: 'SFTP_PASS')]) {
+                        echo 'Deploying to DirectAdmin via strict SFTP (No Shell Allowed)...'
+                        
+                        // Use sftp with a heredoc to cd and put files recursively.
+                        // sshpass handles the password authentication.
+                        sh """
+                            sshpass -p "${SFTP_PASS}" sftp -o StrictHostKeyChecking=no ${SFTP_USER}@109.163.225.82 <<EOF
+                            cd domains/test.invoiceflow.nl/public_html
+                            put -r build/*
+                            bye
+EOF
+                        """
+                        
+                        echo 'Deployment Successful!'
+                    }
+                }
             }
         }
     }
